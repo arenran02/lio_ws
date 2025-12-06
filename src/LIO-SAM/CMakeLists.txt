@@ -60,6 +60,9 @@ else()
   target_link_libraries(${PROJECT_NAME}_mapOptimization gtsam "${cpp_typesupport_target}")
 endif()
 
+add_executable(${PROJECT_NAME}_simpleGpsOdom src/simpleGpsOdom.cpp)
+ament_target_dependencies(${PROJECT_NAME}_simpleGpsOdom rclcpp std_msgs sensor_msgs nav_msgs geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
+
 
 install(
   DIRECTORY launch
@@ -92,6 +95,11 @@ install(
 )
 
 install(
+  TARGETS ${PROJECT_NAME}_simpleGpsOdom
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
   DIRECTORY "include/"
   DESTINATION include
 )
@@ -110,4 +118,3 @@ if(BUILD_TESTING)
 endif()
 
 ament_package()
-
