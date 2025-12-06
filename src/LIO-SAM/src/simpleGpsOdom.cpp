@@ -35,13 +35,13 @@ class GNSSOdom : public ParamServer {
       RCLCPP_ERROR(this->get_logger(), "POS LLA NAN...");
       return;
     }
-    double gps_time = static_cast<double>(msg->header.stamp.sec) + msg->header.stamp.nanosec / 10e9;
     Eigen::Vector3d lla(msg->latitude, msg->longitude, msg->altitude);
     // std::cout << "LLA: " << lla.transpose() << std::endl;
     if (!initXyz) {
       RCLCPP_INFO(this->get_logger(), "Init Orgin GPS LLA  %f, %f, %f", msg->latitude, msg->longitude,
                msg->altitude);
       gtools.lla_origin_ = lla;
+      prevPos.setZero();
       initXyz = true;
       return;
     }
@@ -54,9 +54,9 @@ class GNSSOdom : public ParamServer {
     // RCLCPP_INFO(this->get_logger(), "GPS ENU XYZ : %f, %f, %f", enu(0), enu(1), enu(2));
 
     // sometimes you may get a wrong origin at the beginning
-    if (abs(enu.x()) > 10000 || abs(enu.x()) > 10000 || abs(enu.x()) > 10000) {
+    if (abs(enu.x()) > 10000 || abs(enu.y()) > 10000 || abs(enu.z()) > 10000) {
       RCLCPP_INFO(this->get_logger(), "Error ogigin : %f, %f, %f", enu(0), enu(1), enu(2));
-      ResetOrigin(lla);
+      ResetOrigin(lla, true);
       return;
     }
 
@@ -83,8 +83,7 @@ class GNSSOdom : public ParamServer {
         prevYaw = yaw;
       }
       RCLCPP_DEBUG(this->get_logger(), "gps yaw : %f", yaw);
-    } else {
-      orientationReady_ = false;
+    } else if (!orientationReady_) {
       return;
     }
 
@@ -98,7 +97,7 @@ class GNSSOdom : public ParamServer {
     nav_msgs::msg::Odometry odom_msg;
     odom_msg.header.stamp = msg->header.stamp;
     odom_msg.header.frame_id = odometryFrame;
-    odom_msg.child_frame_id = "gps";
+    odom_msg.child_frame_id = "navsat_link";
 
     // ----------------- 1. use utm -----------------------
     //        odom_msg.pose.pose.position.x = utm_x - origin_utm_x;
@@ -112,10 +111,6 @@ class GNSSOdom : public ParamServer {
     odom_msg.pose.covariance[0] = msg->position_covariance[0];
     odom_msg.pose.covariance[7] = msg->position_covariance[4];
     odom_msg.pose.covariance[14] = msg->position_covariance[8];
-    odom_msg.pose.covariance[1] = lla[0];
-    odom_msg.pose.covariance[2] = lla[1];
-    odom_msg.pose.covariance[3] = lla[2];
-    odom_msg.pose.covariance[4] = msg->status.status;
     // if (orientationReady_)
     odom_msg.pose.pose.orientation = yawQuat;
     //    else {
@@ -141,7 +136,14 @@ class GNSSOdom : public ParamServer {
     fusedPathPub->publish(rospath);
   }
 
-  void ResetOrigin(Eigen::Vector3d &_lla) { gtools.lla_origin_ = _lla; }
+  void ResetOrigin(const Eigen::Vector3d &_lla, bool resetOrientation = false) {
+    gtools.lla_origin_ = _lla;
+    prevPos.setZero();
+    if (resetOrientation) {
+      orientationReady_ = false;
+      firstYawInit = false;
+    }
+  }
 
   GpsTools gtools;
 
@@ -155,7 +157,7 @@ class GNSSOdom : public ParamServer {
   bool orientationReady_ = false;
   bool initXyz = false;
   bool firstYawInit = false;
-  Eigen::Vector3d prevPos;
+  Eigen::Vector3d prevPos = Eigen::Vector3d::Zero();
   double yaw = 0.0, prevYaw = 0.0;
   geometry_msgs::msg::Quaternion yawQuat;
   nav_msgs::msg::Path rospath;
