@@ -13,17 +13,18 @@
 #include <mutex>
 #include <queue>
 
-#include "lio_sam/gpsTools.hpp"
+#include "gpsTools.hpp"
 #include <rclcpp/rclcpp.hpp>
-#include "lio_sam/utility.hpp"
+#include "utility.hpp"
 
 class GNSSOdom : public ParamServer {
  public:
   GNSSOdom(const rclcpp::NodeOptions & options) : ParamServer("lio_sam_gnss_odom", options)
   {
+    gpsInputTopic_ = declare_parameter<std::string>("gpsInputTopic");
     gpsSub = create_subscription<sensor_msgs::msg::NavSatFix>(
-        gpsTopic, qos, std::bind(&GNSSOdom::GNSSCB, this, std::placeholders::_1));
-    gpsOdomPub = create_publisher<nav_msgs::msg::Odometry>("/gps_odom", 100);
+        gpsInputTopic_, qos, std::bind(&GNSSOdom::GNSSCB, this, std::placeholders::_1));
+    gpsOdomPub = create_publisher<nav_msgs::msg::Odometry>("/odometry/gps", 100);
     fusedPathPub = create_publisher<nav_msgs::msg::Path>("/gps_path", 100);
   }
 
@@ -150,6 +151,7 @@ class GNSSOdom : public ParamServer {
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr gpsOdomPub;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr fusedPathPub;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gpsSub;
+  std::string gpsInputTopic_;
 
   std::mutex mutexLock;
   std::deque<sensor_msgs::msg::NavSatFix::ConstSharedPtr> gpsBuf;

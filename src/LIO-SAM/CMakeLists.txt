@@ -61,8 +61,21 @@ else()
 endif()
 
 add_executable(${PROJECT_NAME}_simpleGpsOdom src/simpleGpsOdom.cpp)
-ament_target_dependencies(${PROJECT_NAME}_simpleGpsOdom rclcpp std_msgs sensor_msgs nav_msgs geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
-
+ament_target_dependencies(${PROJECT_NAME}_simpleGpsOdom
+  rclcpp
+  std_msgs
+  sensor_msgs
+  nav_msgs
+  pcl_conversions
+  geometry_msgs
+  tf2
+  tf2_eigen
+  tf2_ros
+  tf2_geometry_msgs
+  visualization_msgs
+  OpenCV       # ← 추가!
+  PCL          # ← 추가!
+)
 
 install(
   DIRECTORY launch
