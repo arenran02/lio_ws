@@ -67,7 +67,7 @@ class GNSSOdom : public ParamServer {
     double distance =
         sqrt(pow(enu(1) - prevPos(1), 2) + pow(enu(0) - prevPos(0), 2));
     if (distance > 0.1) {
-      // 返回值是此点与远点连线与x轴正方向的夹角
+      // Angle between the line from the previous point to this point and the positive X axis
       yaw = atan2(enu(1) - prevPos(1), enu(0) - prevPos(0));
       tf2::Quaternion q;
       q.setRPY(0, 0, yaw);

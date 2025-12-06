@@ -42,10 +42,10 @@ class GpsTools {
   }
 
   /**
-   *  //2. LLA经度(longitude),纬度(latitude)和高度(altitude)经纬高坐标系
-   * 转(Earth-Centered, Earth-Fixed)
-   *  Z轴指向指向北，但不完全精确地与地球转动轴重合。转动轴有微小“摆动”，称之为“极运动(polar
-   * motion)” X轴在球面上与格林威治线和赤道的交点
+   *  Convert LLA longitude, latitude, altitude geodetic coordinates to the
+   *  Earth-Centered, Earth-Fixed frame. The Z-axis points north but is not
+   *  perfectly aligned with Earth's rotation axis due to polar motion. The X-axis
+   *  intersects the Greenwich meridian and the equator.
    * @param lla
    * @return
    */
@@ -111,10 +111,10 @@ class GpsTools {
   }
 
   void updateGPSpose(const sensor_msgs::msg::NavSatFix &gps_msgs) {
-    //检查状态4
+    // Check GPS status codes
     if (gps_msgs.status.status == 4 || gps_msgs.status.status == 5 ||
         gps_msgs.status.status == 1 || gps_msgs.status.status == 2) {
-      //第一个的时候设置为起点
+      // Set the first valid measurement as the origin
       if (lla_origin_ == Eigen::Vector3d::Identity()) {
         Eigen::Vector3d lla = GpsMsg2Eigen(gps_msgs);
         lla_origin_ = lla;
@@ -131,10 +131,10 @@ class GpsTools {
     }
   }
 
-  //变量部分
-  // 1.lla的起点
+  // Member variables
+  // 1. Origin in LLA
   Eigen::Vector3d lla_origin_;
-  // 2.enu下的坐标
+  // 2. Position in the ENU frame
   Eigen::Vector3d gps_pos_;
 
  private:
